@@ -1,0 +1,64 @@
+!pip install dash plotly pandas
+
+
+import dash
+import dash_core_components as dcc
+import dash_html_components as html
+import plotly.graph_objs as go
+import pandas as pd
+from dash.dependencies import Input, Output, State
+
+
+app = dash.Dash(__name__)
+
+
+app.layout = html.Div([
+    html.H1('Data Science Dashboard'),
+    html.Div([
+        html.Label('Number of data points'),
+        dcc.Input(id='n-data-points', type='number', value=10),
+        html.Button('Update', id='update-data'),
+    ]),
+    dcc.Graph(id='graph'),
+    html.Button('Download PNG', id='download-png'),
+])
+
+
+@app.callback(
+    Output('graph', 'figure'),
+    [Input('update-data', 'n_clicks')],
+    [State('n-data-points', 'value')]
+)
+def update_graph(n_clicks, n_data_points):
+    x_data = pd.Series(['x{}'.format(i) for i in range(n_data_points)])
+    y_data = pd.Series(['y{}'.format(i) for i in range(n_data_points)])
+    
+    trace = go.Scatter(x=x_data, y=y_data, mode='lines', line=dict(width=3))
+    layout = go.Layout(title='Line Graph', xaxis=dict(title='X'), yaxis=dict(title='Y'))
+    fig = go.Figure(data=[trace], layout=layout)
+    
+    return fig
+    
+    
+@app.callback(
+    Output('download-png', 'href'),
+    [Input('update-data', 'n_clicks')],
+    [State('n-data-points', 'value')]
+)
+def update_download_link(n_clicks, n_data_points):
+    x_data = pd.Series(['x{}'.format(i) for i in range(n_data_points)])
+    y_data = pd.Series(['y{}'.format(i) for i in range(n_data_points)])
+    
+    trace = go.Scatter(x=x_data, y=y_data, mode='lines', line=dict(width=3))
+    layout = go.Layout(title='Line Graph', xaxis=dict(title='X'), yaxis=dict(title='Y'))
+    fig = go.Figure(data=[trace], layout=layout)
+    
+    image_bytes = fig.to_image(format='png', width=800, height=500, scale=2)
+    return 'data:image/png;base64,{}'.format(base64.b64encode(image_bytes).decode())
+    
+    
+if __name__ == '__main__':
+    app.run_server(debug=True)
+
+
+
